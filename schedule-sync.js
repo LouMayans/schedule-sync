@@ -10,6 +10,7 @@ var key;
 var botToken = 'xoxb-450052941120-450980774325-McEQJd1Pcivpkp7q5Ytgw9OI';
 var user = '';
 const rtm = new RTMClient(botToken);
+var realName = '';
 let waitingId = '-1';
 let receiveId = '-1';
 let personOneId = '-1';
@@ -17,6 +18,7 @@ let personTwoId = '-1';
 let scheduleAccepted = false;
 var personOneCode = '';
 var personTwoCode = '';
+
 rtm.start();
 rtm.on('message', (event) => {
 	if(scheduleAccepted) {
@@ -51,13 +53,19 @@ rtm.on('message', (event) => {
 				name = tempName[1];
 			else if (tempName.length == 3)
 				name = tempName[1] + ' ' + tempName[2];
-			getUsers(name);
+			getUsers(name, event.user);
 		}
 	}
 })
-function getUsers(user) {
+
+function getUsers(user, userID) {
 	axios.get('https://slack.com/api/rtm.start?token=' + botToken)
 	.then((res) => {
+		for (let tmpUser in res.data.users) {
+			if (res.data.users[tmpUser].id == userID) 
+				realName = res.data.users[tmpUser].real_name;
+		}
+
 		for (let tempUser in res.data.users) {
 			if (res.data.users[tempUser].real_name == user) {
 				//console.log('User Found');
@@ -66,7 +74,7 @@ function getUsers(user) {
 					for (let tempId in response.data.channels) {
 						if (response.data.channels[tempId].user == res.data.users[tempUser].id){
 							waitingId = res.data.users[tempUser].id;
-							rtm.sendMessage('Hello '+user+'!\n Person 1 would like to schedule a meeting with you!\n\n Enter "accept" to continue or "decline" to reject their offer.', response.data.channels[tempId].id);
+							rtm.sendMessage('Hello '+ user +'!\n' + realName + ' would like to schedule a meeting with you!\n\n Enter "accept" to continue or "decline" to reject their offer.', response.data.channels[tempId].id);
 							receiveId = response.data.channels[tempId].id;
 						}
 					}
