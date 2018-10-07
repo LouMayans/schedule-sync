@@ -16,10 +16,28 @@ let personTwoChannel = '-1';
 let personOneChannel = '-1';
 let scheduleAccepted = false;
 let choice = false;
+let personOneFinalText = '';
+let personTwoFinalText = '';
+let finalCounter = 0;
+let output = '';
 
 rtm.start();
 rtm.on('message', (event) => {
-	if(scheduleAccepted) {
+	if (choice) {
+		if(event.user == personTwoId && !event.bot_id) {
+			personTwoFinalText = event.text;
+			finalCounter++;
+			if (finalCounter > 1)
+				final();
+		}
+		else if(event.user == personOneId && !event.bot_id) {
+			personOneFinalText = event.text;
+			finalCounter++;
+			if (finalCounter > 1)
+				final();
+		}
+	}
+	else if(scheduleAccepted) {
 		if(event.user == personTwoId && !event.bot_id) {
 			calendar(event.text);
 		}
@@ -155,6 +173,7 @@ function listEvents(auth) {
     }
   });
   if (counter == 2) {
+  	scheduleAccepted = false;
   	displayEvents();
   }
 }
@@ -171,7 +190,6 @@ function displayEvents() {
 						closestEvents.push(res.data.dayDates[k])
 					else break;
 				}
-		let output = '';
 		for (let n in closestEvents) {
 			output += String(n + 1) + ') '
 					+ String(closestEvents[n]._day) + '/' 
@@ -181,10 +199,25 @@ function displayEvents() {
 					+ String(closestEvents[n].events.endTime) + '\n';
 		}
 		choice = true;
-		rtm.sendMessage('Perfect! These times work for both of you:\n' + output + 'Choose four of the best times that work for you in order in a comma separated list (i.e. 2,6,5,4): ', personOneChannel);
-		rtm.sendMessage('Perfect! These times work for both of you:\n' + output + 'Choose four of the best times that work for you in order in a comma separated list (i.e. 2,6,5,4): ', personTwoChannel);
+		rtm.sendMessage('Perfect! These times work for both of you:\n\n' + output + '\nChoose four of the best times that work for you in order in a comma separated list (i.e. 2,6,5,4): ', personOneChannel);
+		rtm.sendMessage('Perfect! These times work for both of you:\n\n' + output + '\nChoose four of the best times that work for you in order in a comma separated list (i.e. 2,6,5,4): ', personTwoChannel);
 	})
 	.catch((err) => {
 		console.log(err);
 	})
+}
+
+function final() {
+	personOneFinalText = personOneFinalText.split(',');
+	personTwoFinalText = personTwoFinalText.split(',');
+
+	for (let i in personOneFinalText)
+		for (let j in personTwoFinalText) {
+			if (personOneFinalText[i] == personTwoFinalText[j]) {
+				let newText = output.split(')')[j];
+				newText = newText.slice(0, newText.length - 2);
+				rtm.sendMessage('This would be a good time for both of you to meet!\n\n' + newText, personOneChannel);
+				rtm.sendMessage('This would be a good time for both of you to meet!\n\n' + newText, personTwoChannel);
+			}
+		}
 }
