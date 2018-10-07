@@ -21,40 +21,74 @@ namespace ScheduleSync
 
             Person person1 = new Person();
             Person person2 = new Person();
-
-            for (int i = 0; i < p1events.Length; i++)
+            int datecount = -1;
+            for (int i = 0; i < p1events.Length- 1; i++)
             {
                 string[] _event = p1events[i].Split(' ');
                 int year, month, day;
                 Int32.TryParse(_event[0].Substring(0, 4), out year);
                 Int32.TryParse(_event[0].Substring(5, 2), out month);
                 Int32.TryParse(_event[0].Substring(8, 2), out day);
-                person1.dayDates.Add(new Date(year, month, day));
+                Date temp = new Date(year, month, day);
+
+                if (person1.dayDates.Count == 0)
+                {
+                    person1.dayDates.Add(temp);
+                    ++datecount;
+                }
+                else
+                {
+                    if(!(person1.dayDates[datecount]._year == temp._year && person1.dayDates[datecount]._month == temp._month && person1.dayDates[datecount]._day == temp._day))
+                    {
+                        person1.dayDates.Add(temp);
+                        ++datecount;
+                    }
+                }
+
+                int start, end;
+                string startS = _event[0].Substring(11, 2) + _event[0].Substring(14, 2);
+                string endS = _event[1].Substring(11, 2) + _event[1].Substring(14, 2);
+                Int32.TryParse(startS, out start);
+                Int32.TryParse(endS, out end);
+
+                person1.dayDates[datecount].events.Add(new Event(start, end));
             }
-            /*
-            person1.dayDates.Add(new Date(0));
-            person2.dayDates.Add(new Date(0));
+            datecount = -1;
+            for (int i = 0; i < p2events.Length - 1; i++)
+            {
+                string[] _event = p2events[i].Split(' ');
+                int year, month, day;
+                Int32.TryParse(_event[0].Substring(0, 4), out year);
+                Int32.TryParse(_event[0].Substring(5, 2), out month);
+                Int32.TryParse(_event[0].Substring(8, 2), out day);
+                Date temp = new Date(year, month, day);
 
-            person1.dayDates[0].events.Add(new Event(800, 1000));
-            person1.dayDates[0].events.Add(new Event(1400,1600));
-            person1.dayDates[0].events.Add(new Event(1800, 1900));
+                if (person2.dayDates.Count == 0)
+                {
+                    person2.dayDates.Add(temp);
+                    ++datecount;
+                }
+                else
+                {
+                    if (!(person2.dayDates[datecount]._year == temp._year && person2.dayDates[datecount]._month == temp._month && person2.dayDates[datecount]._day == temp._day))
+                    {
+                        person2.dayDates.Add(temp);
+                        ++datecount;
+                    }
+                }
 
-            person2.dayDates[0].events.Add(new Event(1100, 1200));
-            person2.dayDates[0].events.Add(new Event(1500, 1600));
-            person2.dayDates[0].events.Add(new Event(1900, 2100));
+                int start, end;
+                string startS = _event[0].Substring(11, 2) + _event[0].Substring(14, 2);
+                string endS = _event[1].Substring(11, 2) + _event[1].Substring(14, 2);
+                Int32.TryParse(startS, out start);
+                Int32.TryParse(endS, out end);
 
-            person1.dayDates.Add(new Date(1));
-            person2.dayDates.Add(new Date(1));
+                person2.dayDates[datecount].events.Add(new Event(start, end));
+            }
 
-            person1.dayDates[1].events.Add(new Event(800, 1000));
-            person1.dayDates[1].events.Add(new Event(1400, 1600));
+            
 
-            person2.dayDates[1].events.Add(new Event(1100, 1200));
-            person2.dayDates[1].events.Add(new Event(1300, 1400));
-            person2.dayDates[1].events.Add(new Event(1900, 2100));
-            person2.dayDates[1].events.Add(new Event(2200, 2400));
-
-            Person FreeTimeGuy = getFreeTime(person1, person2);*/
+            Person FreeTimeGuy = getFreeTime(person1, person2);
         }
 
         public static Person getFreeTime(Person person1, Person person2)
@@ -62,14 +96,39 @@ namespace ScheduleSync
             Person freeTime = new Person();
 
             Person current;
-            if (person1.dayDates.Count < person2.dayDates.Count)
+            Person after;
+            if (person1.dayDates.Count > person2.dayDates.Count)
+            {
                 current = person1;
+                after = person2;
+            }
             else
+            {
                 current = person2;
+                after = person1;
+            }
 
             for (int i = 0; i < current.dayDates.Count; i++)
             {
-                freeTime.dayDates.Add(getBusyTimes(person1.dayDates[i], person2.dayDates[i]));
+
+                bool checkFound = false;
+                foreach (Date date in after.dayDates)
+                {
+                    if (current.dayDates[i]._year == date._year && current.dayDates[i]._month == date._month && current.dayDates[i]._day == date._day)
+                    {
+                        freeTime.dayDates.Add(getBusyTimes(current.dayDates[i], date));
+                        checkFound = true;
+                        break;
+                    }
+                }
+
+                if(!checkFound)
+                {
+                    freeTime.dayDates.Add(getBusyTimes(current.dayDates[i], new Date(current.dayDates[i]._year, current.dayDates[i]._month, current.dayDates[i]._day)));
+                }
+
+                
+
             }
 
             freeTime = invertTime(freeTime);
@@ -99,8 +158,8 @@ namespace ScheduleSync
                         }
                         else
                             continue;
-
-                    freeTime.dayDates[i].events.Add(new Event(busyTime.dayDates[i].events[j-1].endTime, busyTime.dayDates[i].events[j].startTime));
+                    if(j != 0)
+                        freeTime.dayDates[i].events.Add(new Event(busyTime.dayDates[i].events[j-1].endTime, busyTime.dayDates[i].events[j].startTime));
                 }
             }
             return freeTime;
@@ -119,10 +178,10 @@ namespace ScheduleSync
                     busyTime.events.Add(new Event(person2.events[person2Count].startTime, person2.events[person2Count].endTime));
                     ++person2Count;
                 }
-                else if (person2.events.Count == person1Count)
+                else if (person2.events.Count == person2Count)
                 {
-                    busyTime.events.Add(new Event(person2.events[person2Count].startTime, person2.events[person2Count].endTime));
-                    ++person2Count;
+                    busyTime.events.Add(new Event(person1.events[person1Count].startTime, person1.events[person1Count].endTime));
+                    ++person1Count;
                 }
                 else if(person1.events[person1Count].startTime > person2.events[person2Count].startTime)
                 {
@@ -146,6 +205,7 @@ namespace ScheduleSync
                             //*Person 2 is both earlier in start and end then add person 2 to result and increment
                             busyTime.events.Add(new Event(person2.events[person2Count].startTime, person2.events[person2Count].endTime));
                             ++person2Count;
+                            ++person1Count;
                         }
                     }
                     else
@@ -177,6 +237,7 @@ namespace ScheduleSync
                         {
                             busyTime.events.Add(new Event(person1.events[person1Count].startTime, person1.events[person1Count].endTime));
                             ++person1Count;
+                            ++person2Count;
                         }
                         //*if person1 event is both start and end date earlier than the other. so just add that time to result then increment
                         
