@@ -15,6 +15,7 @@ let personOneId = '-1';
 let personTwoChannel = '-1';
 let personOneChannel = '-1';
 let scheduleAccepted = false;
+let choice = false;
 
 rtm.start();
 rtm.on('message', (event) => {
@@ -153,4 +154,37 @@ function listEvents(auth) {
       console.log('No upcoming events found.');
     }
   });
+  if (counter == 2) {
+  	displayEvents();
+  }
+}
+
+function displayEvents() {
+	axios.get('Program/ScheduleSync/start')
+	.then((res) => {
+		console.log(res.data);
+		let closestEvents = [];
+		for (let i in res.data)
+			for (let j in res.data.dayDates)
+				for (let k in res.data.dayDates.events) {
+					if (closestEvents.length < 7)
+						closestEvents.push(res.data.dayDates[k])
+					else break;
+				}
+		let output = '';
+		for (let n in closestEvents) {
+			output += String(n + 1) + ') '
+					+ String(closestEvents[n]._day) + '/' 
+					+ String(closestEvents[n]._month) + '/' 
+					+ String(closestEvents[n]._year) + ' | ' 
+					+ String(closestEvents[n].events.startTime) + ' - '
+					+ String(closestEvents[n].events.endTime) + '\n';
+		}
+		choice = true;
+		rtm.sendMessage('Perfect! These times work for both of you:\n' + output + 'Choose four of the best times that work for you in order in a comma separated list (i.e. 2,6,5,4): ', personOneChannel);
+		rtm.sendMessage('Perfect! These times work for both of you:\n' + output + 'Choose four of the best times that work for you in order in a comma separated list (i.e. 2,6,5,4): ', personTwoChannel);
+	})
+	.catch((err) => {
+		console.log(err);
+	})
 }
