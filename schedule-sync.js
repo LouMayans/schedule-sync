@@ -8,39 +8,34 @@ const TOKEN_PATH = 'token.json';
 
 var key;
 var botToken = 'xoxb-450052941120-450980774325-McEQJd1Pcivpkp7q5Ytgw9OI';
-var user = '';
 const rtm = new RTMClient(botToken);
-var realName = '';
-let waitingId = '-1';
-let receiveId = '-1';
-let personOneId = '-1';
 let personTwoId = '-1';
+let personOneId = '-1';
+let personTwoChannel = '-1';
+let personOneChannel = '-1';
 let scheduleAccepted = false;
-var personOneCode = '';
-var personTwoCode = '';
 
 rtm.start();
 rtm.on('message', (event) => {
 	if(scheduleAccepted) {
-		console.log(event);
-		if(event.user == waitingId && !event.bot_id) {
-			console.log("Taking in link person two");
-			personTwoCode = event.text;
-			console.log(personTwoCode);
+		if(event.user == personTwoId && !event.bot_id) {
+			//console.log("Taking in link person two");
 		}
-		//if(event.user == personTwoId)
+		else if(event.user == personOneId && !event.bot_id) {
+			//console.log("Person 2 token");
+		}
 	}
-	else if (!event.bot_id && event.user == waitingId) {
+	else if (!event.bot_id && event.user == personTwoId) {
 		if (event.text.toUpperCase() == 'ACCEPT'){
 			console.log('accepted');
-			rtm.sendMessage('They accepted! Time to schedule! follow this link: https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.readonly&response_type=code&client_id=205886349566-mdbos4ramaaug4jehfghvmkahc9odcn8.apps.googleusercontent.com&redirect_uri=urn%3Aietf%3Awg%3Aoauth%3A2.0%3Aoob\n Please input the code that you receive from the link:', personOneId);
-			rtm.sendMessage('You accepted! Time to schedule! follow this link: https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.readonly&response_type=code&client_id=205886349566-mdbos4ramaaug4jehfghvmkahc9odcn8.apps.googleusercontent.com&redirect_uri=urn%3Aietf%3Awg%3Aoauth%3A2.0%3Aoob\n Please input the code that you receive from the link:', receiveId);
+			rtm.sendMessage('They accepted! Time to schedule! follow this link: https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.readonly&response_type=code&client_id=205886349566-mdbos4ramaaug4jehfghvmkahc9odcn8.apps.googleusercontent.com&redirect_uri=urn%3Aietf%3Awg%3Aoauth%3A2.0%3Aoob\n Please input the code that you receive from the link:', personOneChannel);
+			rtm.sendMessage('You accepted! Time to schedule! follow this link: https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.readonly&response_type=code&client_id=205886349566-mdbos4ramaaug4jehfghvmkahc9odcn8.apps.googleusercontent.com&redirect_uri=urn%3Aietf%3Awg%3Aoauth%3A2.0%3Aoob\n Please input the code that you receive from the link:', personTwoChannel);
 			scheduleAccepted = true;
 		}
 		else if (event.text.toUpperCase() == 'DECLINE') {
 			console.log('declined');
-			rtm.sendMessage('They declined to schedule. Maybe next time!', personOneId);
-			rtm.sendMessage('You have successfully declined the invitation.', receiveId);
+			rtm.sendMessage('They declined to schedule. Maybe next time!', personOneChannel);
+			rtm.sendMessage('You have successfully declined the invitation.', personTwoChannel);
 		}
 	}
 	else if(event.channel != 'CD81JTRHN' && !event.bot_id) {
@@ -48,7 +43,8 @@ rtm.on('message', (event) => {
 		if(event.text.includes('!schedule')) {
 			let tempName = event.text.split(' ');
 			let name =  '';
-			personOneId = event.channel;
+			personOneId = event.user;
+			personOneChannel = event.channel;
 			if (tempName.length == 2)
 				name = tempName[1];
 			else if (tempName.length == 3)
@@ -59,23 +55,22 @@ rtm.on('message', (event) => {
 })
 
 function getUsers(user, userID) {
+	let realName = '';
 	axios.get('https://slack.com/api/rtm.start?token=' + botToken)
 	.then((res) => {
 		for (let tmpUser in res.data.users) {
-			if (res.data.users[tmpUser].id == userID) 
-				realName = res.data.users[tmpUser].real_name;
-		}
-
+            if (res.data.users[tmpUser].id == userID)
+                realName = res.data.users[tmpUser].real_name;
+        }
 		for (let tempUser in res.data.users) {
 			if (res.data.users[tempUser].real_name == user) {
-				//console.log('User Found');
 				axios.get('https://slack.com/api/conversations.list?token=' + botToken + '&scope=bot&types=im')
 				.then((response) => {
 					for (let tempId in response.data.channels) {
 						if (response.data.channels[tempId].user == res.data.users[tempUser].id){
-							waitingId = res.data.users[tempUser].id;
-							rtm.sendMessage('Hello '+ user +'!\n' + realName + ' would like to schedule a meeting with you!\n\n Enter "accept" to continue or "decline" to reject their offer.', response.data.channels[tempId].id);
-							receiveId = response.data.channels[tempId].id;
+							personTwoId = res.data.users[tempUser].id;
+							rtm.sendMessage('Hello ' + user + '!\n' + realName + 'would like to schedule a meeting with you!\n\n Enter "accept" to continue or "decline" to reject their offer.', response.data.channels[tempId].id);
+							personTwoChannel = response.data.channels[tempId].id;
 						}
 					}
 				})
