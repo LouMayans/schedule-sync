@@ -5,6 +5,7 @@ const readline = require('readline');
 const {google} = require('googleapis');
 const SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
 const TOKEN_PATH = 'token.json';
+var counter = 0;
 
 var key;
 var botToken = 'xoxb-450052941120-450980774325-McEQJd1Pcivpkp7q5Ytgw9OI';
@@ -19,10 +20,10 @@ rtm.start();
 rtm.on('message', (event) => {
 	if(scheduleAccepted) {
 		if(event.user == personTwoId && !event.bot_id) {
-			//console.log("Taking in link person two");
+			calendar(event.text);
 		}
 		else if(event.user == personOneId && !event.bot_id) {
-			//console.log("Person 2 token");
+			calendar(event.text);
 		}
 	}
 	else if (!event.bot_id && event.user == personTwoId) {
@@ -96,7 +97,7 @@ function authorize(credentials, callback) {
 	fs.readFile(TOKEN_PATH, (err, token) => {
 		if (err) return getAccessToken(oAuth2Client, callback);
 		oAuth2Client.setCredentials(JSON.parse(token));
-		callback(oAuth2Client);
+	callback(oAuth2Client);
 	});
 }
 
@@ -112,7 +113,8 @@ function getAccessToken(oAuth2Client, callback) {
   });
     oAuth2Client.getToken(key, (err, token) => {
         if (err) return console.error('Error retrieving access token', err);
-        oAuth2Client.setCredentials(token);
+				oAuth2Client.setCredentials(token);
+				//Store the token to disk for later program executions
         callback(oAuth2Client);
     });
 }
@@ -130,17 +132,23 @@ function listEvents(auth) {
     orderBy: 'startTime',
   }, (err, res) => {
     if (err) return console.log('The API returned an error: ' + err);
-    const events = res.data.items;
+		const events = res.data.items;
+		person = '';
     if (events.length) {
-      console.log('Upcoming 10 events:');
       events.map((event, i) => {
         const start = event.start.dateTime || event.start.date;
         const end = event.end.dateTime || event.end.date;
         var startS = `${start}`;
-        var endS = `${end}`;
-        
-        console.log(startS +' '+ endS + `${event.summary}`);
-      });
+				var endS = `${end}`;
+				person += startS + ' ' + endS + '\n';
+				console.log(startS +' '+ endS + `${event.summary}`);
+			});
+			fs.writeFile('events' + ++counter + '.txt', person, listEvents), (err) => {
+				if (err) console.error(err);
+				console.log('Events stored to', 'events.txt');
+			}
+
+			fs.close();
     } else {
       console.log('No upcoming events found.');
     }
