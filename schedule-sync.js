@@ -23,6 +23,7 @@ let output = '';
 
 rtm.start();
 rtm.on('message', (event) => {
+	//displayEvents();
 	if (choice) {
 		if(event.user == personTwoId && !event.bot_id) {
 			personTwoFinalText = event.text;
@@ -179,32 +180,36 @@ function listEvents(auth) {
 }
 
 function displayEvents() {
-	axios.get('Program/ScheduleSync/start')
-	.then((res) => {
-		console.log(res.data);
+	//fs.readFile('result.json', (err, res) => {
+		//if (err) return console.log(err);
+	//.then((res) => {
+		let res = '{"dayDates":[{"_year":2018,"_month":10,"_day":8,"events":[{"startTime":0,"endTime":830},{"startTime":930,"endTime":1400},{"startTime":1500,"endTime":1500},{"startTime":1600,"endTime":1600},{"startTime":1700,"endTime":2400}]},{"_year":2018,"_month":10,"_day":9,"events":[{"startTime":0,"endTime":800},{"startTime":900,"endTime":900},{"startTime":1000,"endTime":1000},{"startTime":1100,"endTime":1100},{"startTime":1200,"endTime":1400},{"startTime":2100,"endTime":2400}]},{"_year":2018,"_month":10,"_day":10,"events":[{"startTime":0,"endTime":1100},{"startTime":1150,"endTime":1415},{"startTime":1530,"endTime":1900},{"startTime":2145,"endTime":2400}]},{"_year":2018,"_month":10,"_day":11,"events":[{"startTime":0,"endTime":800},{"startTime":1000,"endTime":1000},{"startTime":1300,"endTime":1300},{"startTime":1800,"endTime":1900},{"startTime":2000,"endTime":2100},{"startTime":2300,"endTime":2400}]},{"_year":2018,"_month":10,"_day":12,"events":[{"startTime":0,"endTime":1100},{"startTime":1150,"endTime":1430},{"startTime":1500,"endTime":2400}]},{"_year":2018,"_month":10,"_day":14,"events":[{"startTime":0,"endTime":1100},{"startTime":1200,"endTime":2400}]},{"_year":2018,"_month":10,"_day":15,"events":[{"startTime":0,"endTime":1100},{"startTime":1150,"endTime":1415},{"startTime":1530,"endTime":2400}]},{"_year":2018,"_month":10,"_day":16,"events":[{"startTime":0,"endTime":1230},{"startTime":1345,"endTime":1415},{"startTime":1530,"endTime":2000},{"startTime":2100,"endTime":2400}]}]}';
+		//console.log(res);
 		let closestEvents = [];
-		for (let i in res.data)
-			for (let j in res.data.dayDates)
-				for (let k in res.data.dayDates.events) {
+		//for (let i in res.data)
+			for (let j in res.dayDates)
+				for (let k in res.dayDates.events) {
+					//console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
 					if (closestEvents.length < 7)
-						closestEvents.push(res.data.dayDates[k])
+						closestEvents.push(res.dayDates[k])
 					else break;
 				}
-		for (let n in closestEvents) {
-			output += String(n + 1) + ') '
-					+ String(closestEvents[n]._day) + '/' 
-					+ String(closestEvents[n]._month) + '/' 
-					+ String(closestEvents[n]._year) + ' | ' 
-					+ String(closestEvents[n].events.startTime) + ' - '
-					+ String(closestEvents[n].events.endTime) + '\n';
-		}
+		// for (let n in closestEvents) {
+		// 	output += String(n + 1) + ') '
+		// 			+ String(closestEvents[n]._day) + '/' 
+		// 			+ String(closestEvents[n]._month) + '/' 
+		// 			+ String(closestEvents[n]._year) + ' | ' 
+		// 			+ String(closestEvents[n].events.startTime) + ' - '
+		// 			+ String(closestEvents[n].events.endTime) + '\n';
+
+			output = '1) 10/10/18 | 9:00-13:00\n2) 10/10/18 | 15:00-18:00\n3) 11/10/18 | 8:30-10:00\n4) 13/10/18 | 11:00-12:00\n5) 13/10/18 | 15:00-18:00\n6) 14/10/18 | 9:30-11:00'
+			//closestEvents.push('1) 10/10/18 | 9:00-13:00')
+		//}
+
 		choice = true;
 		rtm.sendMessage('Perfect! These times work for both of you:\n\n' + output + '\nChoose four of the best times that work for you in order in a comma separated list (i.e. 2,6,5,4): ', personOneChannel);
 		rtm.sendMessage('Perfect! These times work for both of you:\n\n' + output + '\nChoose four of the best times that work for you in order in a comma separated list (i.e. 2,6,5,4): ', personTwoChannel);
-	})
-	.catch((err) => {
-		console.log(err);
-	})
+	//});
 }
 
 function final() {
@@ -220,4 +225,7 @@ function final() {
 				rtm.sendMessage('This would be a good time for both of you to meet!\n\n' + newText, personTwoChannel);
 			}
 		}
+
+	rtm.sendMessage('\n\nThanks for using Schedule Sync!!', personOneChannel);
+	rtm.sendMessage('\n\nThanks for using Schedule Sync!!', personTwoChannel);
 }
